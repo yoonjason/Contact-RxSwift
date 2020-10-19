@@ -11,6 +11,7 @@ import Contacts
 import RxSwift
 import RxCocoa
 import NSObject_Rx
+import MessageUI
 
 class ContactCell : UITableViewCell {
     
@@ -33,7 +34,9 @@ class ContactCell : UITableViewCell {
 }
 
 
-class ViewController: UIViewController, UIScrollViewDelegate {
+class ViewController: UIViewController, UIScrollViewDelegate, MFMessageComposeViewControllerDelegate {
+    
+    
     
     var contacts2 = [CNContact]()
     var contacts = BehaviorSubject<[CNContact]>(value: [])
@@ -59,7 +62,8 @@ class ViewController: UIViewController, UIScrollViewDelegate {
             .zip(tableView.rx.itemSelected, tableView.rx.modelSelected(CNContact.self))
             .subscribe(onNext : { [weak self] (indexPath, item) in
                 item.phoneNumbers.forEach { [weak self] phoneNumber in
-                    self?.requestCall(phoneNumber.value.stringValue)
+//                    self?.requestCall(phoneNumber.value.stringValue)
+                    self?.requestSMS(phoneNumber.value.stringValue)
 //                    if let number = phoneNumber.value as? CNPhoneNumber, let label = phoneNumber.label {
 //                        let localizedLabel = CNLabeledValue<CNPhoneNumber>.localizedString(forLabel: label)
 //                        print(localizedLabel)
@@ -149,6 +153,20 @@ class ViewController: UIViewController, UIScrollViewDelegate {
         }else {
             print("NotCalling")
         }
+    }
+    
+    func requestSMS(_ number : String){
+        if (MFMessageComposeViewController.canSendText()) {
+            let controller = MFMessageComposeViewController()
+            controller.body = "안전한 송급입니다. 님께 송금여부를 직접 확인해보세요. \n 금액 : 3,000원 \n 아래 링크를 통해 받아주세요. \n https://www.etoland.co.kr/plugin/mobile/"
+            controller.recipients = [number]
+            controller.messageComposeDelegate = self
+            self.present(controller, animated: true, completion: nil)
+        }
+    }
+    
+    func messageComposeViewController(_ controller: MFMessageComposeViewController, didFinishWith result: MessageComposeResult) {
+        self.dismiss(animated: true, completion: nil)
     }
 }
 
